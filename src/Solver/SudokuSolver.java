@@ -164,8 +164,8 @@ public class SudokuSolver extends Application {
                 possibilities = possibilities.replace(quadrant[i] + "", "");
             }
         }
-        if (board[x][y] != 0)
-            possibilities = possibilities.concat(board[x][y] + "");
+        if (board[y][x] != 0)
+            possibilities = possibilities.concat(board[y][x] + "");
         int possibleInts[] = new int[possibilities.length()];
         for (int i = 0; i < possibilities.length(); i++) {
             possibleInts[i] = Integer.parseInt(Character.toString((possibilities.charAt(i))));
