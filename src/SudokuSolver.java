@@ -50,13 +50,13 @@ public class SudokuSolver extends Application {
                         
                     }
                 }
-                boolean couldSolve = solve(grid, 0, 0);
+                int couldSolve = solve(grid, 0, 0);
                 for (int i = 0; i < 9; i++) {
                     for (int j = 0; j < 9; j++) {
                         sudoku[i][j].setText(grid[i][j] + "");
                     }
                 }
-                if (!couldSolve) {
+                if (couldSolve == -1) {
                     Alert alert = new Alert(AlertType.INFORMATION);
                     alert.setTitle("Failure");
                     alert.setHeaderText("Solution Failure");
@@ -94,18 +94,18 @@ public class SudokuSolver extends Application {
      * @param board - the board as a 2d array
      * @param x - the x position that the algorithm should start at (an int)
      * @param y - the y position that the algorithm should start at (an int)
-     * @return true if a solution is possible. false otherwise.
+     * @return 1 if a solution is possible. -1 if no solution was found. 0 is used for backtracking purposes.
      */
-    public static boolean solve(int board[][], int x, int y) {
+    public static int solve(int board[][], int x, int y) {
         while (y != 9 && board[x][y] != 0) { // if the square we are looking at is already filled out
             if (!Arrays.toString(getPossibilities(x, y, board)).contains(Integer.toString(board[x][y]))) {
-                return false;
+                return -1;
             }
             x = (x + 1) % 9;
             y = (x == 0) ? y + 1: y;
         }
         if (y == 9)
-            return true;
+            return 1;
         // set the variables for the next square
         int newx = (x + 1) % 9;
         int newy = (newx == 0) ? y + 1: y;
@@ -116,13 +116,16 @@ public class SudokuSolver extends Application {
         int possible[] = getPossibilities(x, y, board); // get the possibilities of the square
         for (int k = 0; k < possible.length; k++) {
             board[x][y] = possible[k]; // all of the current possibilities
-            if (!solve(board, newx, newy)) {
+            int returnCode = solve(board, newx, newy);
+            if (returnCode == 0) {
                 board[x][y] = 0;
+            } else if (returnCode == -1) {
+                return -1;
             } else {
-                return true;
+                return 1;
             }
         }
-        return false;
+        return 0;
     }
     /**
      * Shows part of a 2d array, printed as output
@@ -149,27 +152,34 @@ public class SudokuSolver extends Application {
      * @return an array of ints showing the possible numbers for a square in a sudoku board
      */
     private static int[] getPossibilities(int y, int x, int board[][]) {
+        // Three possibilities to consider. If it's a 0, then simply find the possibilities.
+        // If it's a number, and it doesn't contain its own possibility,
         String possibilities = "123456789";
+        int current = board[y][x];
+        if (current != 0) {
+            possibilities = current + "";
+            board[y][x] = 0;
+        }
         int row[] = board[y];
         int column[] = getColumn(x, board);
         int quadrant[] = getQuadrant(x/3, y/3, board);
+
         for (int i = 0; i < column.length; i++) { // iterating through the column/row/quadrant
             if (possibilities.contains(column[i] + "")) {
                 possibilities = possibilities.replace(column[i] + "", "");
             }
             if (possibilities.contains(row[i] + "")) {
                 possibilities = possibilities.replace(row[i] + "", "");
-            } 
+            }
             if (possibilities.contains(quadrant[i] + "")) {
                 possibilities = possibilities.replace(quadrant[i] + "", "");
             }
         }
-        if (board[y][x] != 0)
-            possibilities = possibilities.concat(board[y][x] + "");
         int possibleInts[] = new int[possibilities.length()];
         for (int i = 0; i < possibilities.length(); i++) {
             possibleInts[i] = Integer.parseInt(Character.toString((possibilities.charAt(i))));
         }
+        board[y][x] = current;
         return possibleInts;
     }
 
@@ -185,7 +195,7 @@ public class SudokuSolver extends Application {
         int trueY = y * 3;
         int quadrant[] = new int[9];
         if (trueX > board[0].length || trueX < 0 || trueY > board.length || trueY < 0) {
-            /*System.out.println("Invalid quadrant")*/;
+            ;
         } else {
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
