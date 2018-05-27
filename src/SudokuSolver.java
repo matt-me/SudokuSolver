@@ -1,11 +1,8 @@
-/*Final revision for a while */
-import java.util.Arrays;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.layout.Background;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -104,9 +101,6 @@ public class SudokuSolver extends Application {
      * @return 1 on finding a solution. 0 is used for backtracking purposes.
      */
     public static int solve(int board[][], int x, int y) {
-        if (x == 0 && y == 0) {
-            System.out.println("Trying x = 0 and y = 0\n");
-        }
         if (y == 9)
             return 1;//return 1;
         // set the variables for the next square
