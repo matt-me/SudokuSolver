@@ -47,20 +47,20 @@ public class SudokuSolver extends Application {
                         if (sudoku[i][j].getText().length() == 0)
                             sudoku[i][j].setText("0");
                         grid[i][j] = Integer.parseInt(sudoku[i][j].getText());
-                        
+
                     }
                 }
-                int couldSolve = solve(grid, 0, 0);
+                Result couldSolve = solve(grid, 0, 0);
                 for (int i = 0; i < 9; i++) {
                     for (int j = 0; j < 9; j++) {
                         sudoku[i][j].setText(grid[i][j] + "");
                     }
                 }
-                if (couldSolve == -1) {
+                if (couldSolve.getCode() == -1) {
                     Alert alert = new Alert(AlertType.INFORMATION);
                     alert.setTitle("Failure");
                     alert.setHeaderText("Solution Failure");
-                    alert.setContentText("The program could not find a solution to the given problem.");
+                    alert.setContentText("The program could not find a solution to the given problem. The error is at position: (" + couldSolve.getMessage() + ")");
                     alert.showAndWait();
                 }
             }
@@ -73,7 +73,7 @@ public class SudokuSolver extends Application {
                        sudoku[i][j].setText("");
                    }
                }
-           } 
+           }
         });
         grid.add(clear, 6, 10, 3, 1);
         //finish constructing the window
@@ -96,16 +96,16 @@ public class SudokuSolver extends Application {
      * @param y - the y position that the algorithm should start at (an int)
      * @return 1 if a solution is possible. -1 if no solution was found. 0 is used for backtracking purposes.
      */
-    public static int solve(int board[][], int x, int y) {
+    public static Result solve(int board[][], int x, int y) {
         while (y != 9 && board[x][y] != 0) { // if the square we are looking at is already filled out
             if (!Arrays.toString(getPossibilities(x, y, board)).contains(Integer.toString(board[x][y]))) {
-                return -1;
+                return new Result(-1, "x: " + x + ", y: " + y);
             }
             x = (x + 1) % 9;
             y = (x == 0) ? y + 1: y;
         }
         if (y == 9)
-            return 1;
+            return new Result(1, "x: " + x + ", y: " + y);
         // set the variables for the next square
         int newx = (x + 1) % 9;
         int newy = (newx == 0) ? y + 1: y;
@@ -116,34 +116,16 @@ public class SudokuSolver extends Application {
         int possible[] = getPossibilities(x, y, board); // get the possibilities of the square
         for (int k = 0; k < possible.length; k++) {
             board[x][y] = possible[k]; // all of the current possibilities
-            int returnCode = solve(board, newx, newy);
-            if (returnCode == 0) {
+            Result returnCode = solve(board, newx, newy);
+            if (returnCode.getCode() == 0) {
                 board[x][y] = 0;
-            } else if (returnCode == -1) {
-                return -1;
             } else {
-                return 1;
+                return returnCode;
             }
         }
-        return 0;
+        return new Result(0, "x:" + x + "y:" + y);
     }
-    /**
-     * Shows part of a 2d array, printed as output
-     * Example: "show(0, 0, 9, 9, board)" is enough to show the entire sudoku board
-     * @param x1 the left bound of the array to be shown on the x axis
-     * @param x2 the right bound of the array to be shown on the x axis
-     * @param y1 the upper bound of the array to be shown on the y axis
-     * @param y2 the lower bound of the array to be shown on the y axis
-     * @param board the sudoku board, represented as a 2d array
-     */
-    public static void show(int x1, int x2, int y1, int y2, int board[][]) {
-        for (int i = y1; i < y2; i++) {
-            for (int j = x1; j < x2; j++) {
-                System.out.print(board[i][j] + "  ");
-            }
-            System.out.println();
-        }
-    }
+
     /**
      * Gets the possibilities for a single square
      * @param y - the y position of the square
@@ -218,6 +200,38 @@ public class SudokuSolver extends Application {
             column[i] = board[i][x];
         }
         return column;
+    }
+    private static class Result {
+        private int resultCode;
+        private String message;
+        public Result(int resultCode, String message) {
+            this.resultCode = resultCode;
+            this.message = message;
+        }
+        public String getMessage() {
+            return this.message;
+        }
+        public int getCode() {
+            return this.resultCode;
+        }
+
+    }
+    /**
+     * Shows part of a 2d array, printed as output
+     * Example: "show(0, 0, 9, 9, board)" is enough to show the entire sudoku board
+     * @param x1 the left bound of the array to be shown on the x axis
+     * @param x2 the right bound of the array to be shown on the x axis
+     * @param y1 the upper bound of the array to be shown on the y axis
+     * @param y2 the lower bound of the array to be shown on the y axis
+     * @param board the sudoku board, represented as a 2d array
+     */
+    public static void show(int x1, int x2, int y1, int y2, int board[][]) {
+        for (int i = y1; i < y2; i++) {
+            for (int j = x1; j < x2; j++) {
+                System.out.print(board[i][j] + "  ");
+            }
+            System.out.println();
+        }
     }
 }
 
