@@ -5,6 +5,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.layout.Background;
 import javafx.scene.layout.GridPane;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -24,48 +25,57 @@ public class SudokuSolver extends Application {
         grid.setHgap(10);
         grid.setVgap(10);
         grid.setPadding(new Insets(25, 25, 25, 25));
-        Text scenetitle = new Text("Sudoku Solver");
-        scenetitle.setFont(Font.font("Tahoma", FontWeight.NORMAL, 40));
-        grid.add(scenetitle, 2, 0, 9, 1);
+        Text title = new Text("Sudoku Solver");
+        title.setFont(Font.font("Tahoma", FontWeight.NORMAL, 40));
+        grid.add(title, 2, 0, 9, 1);
         TextField sudoku[][] = new TextField[9][9];
         // the code below adds all of the squares from the gui form to an array to pass to the solve() method
         for (int i = 0; i < 9; i++) {
             for (int j = 0; j < 9; j++) {
-                TextField sudokuSquare = new TextField();
-                sudoku[i][j] = sudokuSquare;
-                grid.add(sudokuSquare, i + 1, j + 1, 1, 1);
+                TextField square = new TextField();
+                if ((i > 2 && i < 6 && !(j > 2 && j < 6)) || (!(i > 2 && i < 6) && j > 2 && j < 6)) {
+                    square.setStyle("-fx-background-color: #d2d2d2; -fx-border-radius: 1; -fx-border-color: rgba(30,30,30,0.50);");
+                } else {
+                    square.setStyle("-fx-background-color: #FFFFFF; -fx-border-radius: 1; -fx-border-color: rgba(30,30,30,0.50);");
+                }
+                sudoku[i][j] = square;
+                grid.add(square, i + 1, j + 1, 1, 1);
             }
         }
         Button solve = new Button("Solve");
+        Button clear = new Button("Clear");
         grid.add(solve, 4, 10, 3, 1);
-        // code for the solve button that solves the board
+        grid.add(clear, 6, 10, 3, 1);
         solve.setOnAction(new EventHandler<ActionEvent>() {
-            @Override public void handle(ActionEvent e) {
+            @Override
+            public void handle(ActionEvent e) {
                 int grid[][] = new int[9][9];
                 for (int i = 0; i < 9; i++) {
                     for (int j = 0; j < 9; j++) {
                         if (sudoku[i][j].getText().length() == 0)
-                            sudoku[i][j].setText("0");
-                        grid[i][j] = Integer.parseInt(sudoku[i][j].getText());
-
+                            grid[i][j] = 0;
+                        else
+                            grid[i][j] = Integer.parseInt(sudoku[i][j].getText());
                     }
                 }
-                Result couldSolve = solve(grid, 0, 0);
-                for (int i = 0; i < 9; i++) {
-                    for (int j = 0; j < 9; j++) {
-                        sudoku[i][j].setText(grid[i][j] + "");
-                    }
-                }
-                if (couldSolve.getCode() == -1) {
+                if (!isValid(grid)) {
                     Alert alert = new Alert(AlertType.INFORMATION);
                     alert.setTitle("Failure");
                     alert.setHeaderText("Solution Failure");
-                    alert.setContentText("The program could not find a solution to the given problem. The error is at position: (" + couldSolve.getMessage() + ")");
+                    alert.setContentText("It seems that the given board cannot be solved. Please check what you have entered and try again.");
                     alert.showAndWait();
+                } else {
+                    int couldSolve = solve(grid, 0, 0);
+                    if (couldSolve == 1) {
+                        for (int i = 0; i < 9; i++) {
+                            for (int j = 0; j < 9; j++) {
+                                sudoku[i][j].setText(grid[i][j] + "");
+                            }
+                        }
+                    }
                 }
             }
         });
-        Button clear = new Button("Clear");
         clear.setOnAction(new EventHandler<ActionEvent>() {
            @Override public void handle(ActionEvent e) {
                for (int i = 0; i < 9; i++) {
@@ -75,37 +85,30 @@ public class SudokuSolver extends Application {
                }
            }
         });
-        grid.add(clear, 6, 10, 3, 1);
-        //finish constructing the window
         Scene scene = new Scene(grid, 425, 450);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
 
-    /**
-     * @param args the command line arguments
-     */
     public static void main(String[] args) {
         launch(args);
     }
+
     /**
      * Takes a sudoku board (2d array) and changes the array into a solved form. Spaces should be represented as 0s.
+     * NOTE: This function assumes that the board is solvable. Please call isValid(board) first to determine if the board can be solved.
      * Uses brute force
      * @param board - the board as a 2d array
      * @param x - the x position that the algorithm should start at (an int)
      * @param y - the y position that the algorithm should start at (an int)
-     * @return 1 if a solution is possible. -1 if no solution was found. 0 is used for backtracking purposes.
+     * @return 1 on finding a solution. 0 is used for backtracking purposes.
      */
-    public static Result solve(int board[][], int x, int y) {
-        while (y != 9 && board[x][y] != 0) { // if the square we are looking at is already filled out
-            if (!Arrays.toString(getPossibilities(x, y, board)).contains(Integer.toString(board[x][y]))) {
-                return new Result(-1, "x: " + x + ", y: " + y);
-            }
-            x = (x + 1) % 9;
-            y = (x == 0) ? y + 1: y;
+    public static int solve(int board[][], int x, int y) {
+        if (x == 0 && y == 0) {
+            System.out.println("Trying x = 0 and y = 0\n");
         }
         if (y == 9)
-            return new Result(1, "x: " + x + ", y: " + y);
+            return 1;//return 1;
         // set the variables for the next square
         int newx = (x + 1) % 9;
         int newy = (newx == 0) ? y + 1: y;
@@ -116,16 +119,24 @@ public class SudokuSolver extends Application {
         int possible[] = getPossibilities(x, y, board); // get the possibilities of the square
         for (int k = 0; k < possible.length; k++) {
             board[x][y] = possible[k]; // all of the current possibilities
-            Result returnCode = solve(board, newx, newy);
-            if (returnCode.getCode() == 0) {
+            if (solve(board, newx, newy) == 0) {
                 board[x][y] = 0;
             } else {
-                return returnCode;
+                return 1;
             }
         }
-        return new Result(0, "x:" + x + "y:" + y);
+        return 0;
     }
-
+    public static boolean isValid(int [][]board) {
+        for (int i = 0; i < board.length; i++) {
+            for (int j = 0; j < board[i].length; j++) {
+                if (board[i][j] != 0 && getPossibilities(i, j, board).length == 0) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
     /**
      * Gets the possibilities for a single square
      * @param y - the y position of the square
@@ -201,6 +212,11 @@ public class SudokuSolver extends Application {
         }
         return column;
     }
+
+    /**
+     * The class Result is just so the solve method can return a number and a String
+     * For example, if it returns -1, it will need to return a string letting the user know which square is invalid.
+     */
     private static class Result {
         private int resultCode;
         private String message;
@@ -225,13 +241,5 @@ public class SudokuSolver extends Application {
      * @param y2 the lower bound of the array to be shown on the y axis
      * @param board the sudoku board, represented as a 2d array
      */
-    public static void show(int x1, int x2, int y1, int y2, int board[][]) {
-        for (int i = y1; i < y2; i++) {
-            for (int j = x1; j < x2; j++) {
-                System.out.print(board[i][j] + "  ");
-            }
-            System.out.println();
-        }
-    }
 }
 
